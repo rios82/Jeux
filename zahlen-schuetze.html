@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zahlen-Schütze</title>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:#0a0a23;font-family:"Trebuchet MS",Verdana,Arial,sans-serif;overflow:hidden}
+#wrap{height:100%;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:min(100vw,calc((100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))*16/9));aspect-ratio:16/9;overflow:hidden;color:#fff;
+ background:radial-gradient(ellipse at 50% 120%,#7c3aed 0,#312e81 35%,#0f0c29 75%)}
+.b{position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;line-height:1.15;flex-direction:column}
+button.b{cursor:pointer;font-family:inherit;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border:calc(var(--u)*.25) solid rgba(255,255,255,.75);border-radius:calc(var(--u)*1.2);transition:transform .15s}
+button.b:hover:not(:disabled),button.b:focus{transform:scale(1.07);outline:calc(var(--u)*.4) solid #facc15;outline-offset:calc(var(--u)*.15)}
+.pri{background:#f59e0b!important;color:#1b1030!important;border-color:#fff3c4!important}
+.sel{background:#22c55e!important;color:#052e16!important;border-color:#fff!important}
+.hs{background:transparent!important;border:0!important;padding:0!important;animation:bob 2.6s ease-in-out infinite}
+.hs svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 calc(var(--u)*.4) calc(var(--u)*.6) rgba(0,0,0,.5))}
+.hs span{position:relative;font-size:calc(var(--u)*4.4);font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5);margin-top:-1%}
+.hs.good svg path{fill:#16a34a!important}.hs.bad svg path{fill:#475569!important}.hs.bad{filter:grayscale(1)}
+@keyframes bob{50%{transform:translateY(calc(var(--u)*-1))}}
+.chip{border-radius:calc(var(--u)*1.5);font-weight:800;border:calc(var(--u)*.25) solid transparent;opacity:.65}.chip.on{opacity:1;border-color:#fff;transform:scale(1.08)}
+.card{background:rgba(255,255,255,.1);border:calc(var(--u)*.3) solid rgba(255,255,255,.35);border-radius:calc(var(--u)*2)}
+.pop{animation:pop .45s ease-out}.fade{animation:fd .35s}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.12)}100%{transform:scale(1)}}@keyframes fd{from{opacity:0}to{opacity:1}}
+.star{position:absolute;border-radius:50%;background:#fff;pointer-events:none;animation:tw 3s infinite ease-in-out}
+@keyframes tw{0%,100%{opacity:.1}50%{opacity:.9}}
+.bullet{position:absolute;width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);border-radius:50%;background:#fde047;box-shadow:0 0 calc(var(--u)*1.2) #fde047;transition:left .28s linear,top .28s linear;z-index:5}
+.burst{position:absolute;pointer-events:none;font-size:calc(var(--u)*5);animation:pop .5s ease-out,fd .9s reverse forwards}
+</style></head><body><div id="wrap"><div id="stage"></div></div>
+<script>
+const S=document.getElementById('stage');
+const PC=['#ef4444','#3b82f6','#22c55e','#eab308'],HC=['#ec4899','#f97316','#a855f7','#06b6d4'];
+const MODES=[['plus','Plus','addition'],['minus','Minus','soustraction'],['mal','Mal','multiplication'],['geteilt','Geteilt','division'],['wort','Zahlwörter','les nombres en lettres'],['mix','Mix','tout mélangé']];
+const PER=6,TIME=12;
+let P=1,mode='mix',scr='home',sc=[],cur=0,qn=0,Q=null,tl=TIME,tm=null,lock=false,snd=true,mus=false,ac=null,musT=null,nextT=0,stp=0;
+const E=(x,y,w,h,pt,cls,html,css)=>{const d=document.createElement(/^(pri|sel|sec|hs)/.test(cls||'')?'button':'div');d.className='b '+(cls||'');d.style.cssText=`left:${x}%;top:${y}%;width:${w}%;height:${h}%;font-size:calc(var(--u)*${pt});${css||''}`;d.innerHTML=html;S.appendChild(d);return d};
+const size=()=>S.style.setProperty('--u',(S.clientWidth/100)+'px');addEventListener('resize',size);
+const ctx=()=>ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+function note(f,t,d,ty,v,f2){const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.05)}
+function tone(f,d,ty='sine',v=.25,w=0,f2){if(!snd)return;try{ctx();note(f,ac.currentTime+w,d,ty,v,f2)}catch(e){}}
+const pew=()=>tone(900,.25,'square',.12,0,200),ding=()=>{tone(660,.15);tone(990,.35,'sine',.25,.12)},buzz=()=>tone(150,.45,'sawtooth',.2),fan=()=>[523,659,784,1047].forEach((f,i)=>tone(f,.3,'sine',.25,i*.14));
+const CH=[[57,60,64],[53,57,60],[60,64,67],[55,59,62]],mf=m=>440*Math.pow(2,(m-69)/12),ARP=[0,1,2,1,0,1,2,1];
+function sched(){while(nextT<ac.currentTime+.3){const c=CH[Math.floor(stp/8)%4],i=stp%8;note(mf(c[ARP[i]]+12),nextT,.22,'triangle',.04);if(i%4===0)note(mf(c[0]-12),nextT,.7,'sine',.08);nextT+=.22;stp++}}
+function music(on){mus=on;clearInterval(musT);if(on){try{ctx();if(ac.state==='suspended')ac.resume();nextT=ac.currentTime+.1;musT=setInterval(sched,100)}catch(e){}}}
+function clear(){clearInterval(tm);S.innerHTML='';size();for(let i=0;i<26;i++){const d=document.createElement('i'),z=1+Math.random()*3;d.className='star';d.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*70}%;width:${z}px;height:${z}px;animation-delay:${Math.random()*3}s`;S.appendChild(d)}}
+const focus1=()=>{const b=S.querySelector('button:not(:disabled)');b&&b.focus({preventScroll:true})};
+function tools(){E(1.5,92,11,5.3,1.2,'sec',snd?'Ton : ja':'Ton : nein').onclick=()=>{snd=!snd;if(snd)ding();render()};E(13.5,92,13,5.3,1.2,'sec',mus?'Musik : ja':'Musik : nein').onclick=()=>{music(!mus);render()}}
+function render(){S.classList.remove('fade');void S.offsetWidth;S.classList.add('fade');({home,game,result}[scr])()}
+const O=['null','eins','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn','elf','zwölf','dreizehn','vierzehn','fünfzehn','sechzehn','siebzehn','achtzehn','neunzehn'],T=['','','zwanzig','dreißig','vierzig','fünfzig','sechzig','siebzig','achtzig','neunzig'];
+const word=n=>n<20?O[n]:n===100?'hundert':(n%10?(n%10===1?'ein':O[n%10])+'und':'')+T[Math.floor(n/10)];
+const r=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),sh=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+function make(m){if(m==='mix')m=['plus','minus','mal','geteilt','wort'][r(0,4)];let q,sub,c,opts,wordOpts=false;
+ if(m==='plus'){const a=r(2,15),b=r(2,15);q=`${a} + ${b} = ?`;sub=`${word(a)} plus ${word(b)}`;c=a+b}
+ else if(m==='minus'){const a=r(8,25),b=r(2,a-1);q=`${a} − ${b} = ?`;sub=`${word(a)} minus ${word(b)}`;c=a-b}
+ else if(m==='mal'){const a=r(2,9),b=r(2,9);q=`${a} × ${b} = ?`;sub=`${word(a)} mal ${word(b)}`;c=a*b}
+ else if(m==='geteilt'){const b=r(2,9),c0=r(2,9);q=`${b*c0} ÷ ${b} = ?`;sub=`${word(b*c0)} geteilt durch ${word(b)}`;c=c0}
+ else{const n=r(3,99);if(Math.random()<.5){q=`Welche Zahl ist „${word(n)}“ ?`;sub='Quel est ce nombre ? (en chiffres)';c=n}else{q=`Wie schreibt man ${n} ?`;sub='Comment écrit-on ce nombre ? (en lettres)';c=n;wordOpts=true}}
+ const s=new Set([c]);let g=0;while(s.size<4&&g++<60){let v=c+r(-4,4)*(m==='wort'||c>20?r(1,3):1);if(v>=0&&v<=100)s.add(v)}while(s.size<4)s.add(c+s.size);
+ const a=sh([...s]);return{q,sub,c:a.indexOf(c),o:a.map(v=>wordOpts?word(v):String(v)),ans:wordOpts?word(c):String(c)}}
+function home(){clear();E(10,4,80,13,6.5,'','Zahlen-Schütze','font-weight:800;color:#ffe9a8;text-shadow:0 4px 12px #000');
+ E(10,17,80,6,2,'','Triff das Herz mit der richtigen Antwort! · Touche le cœur avec la bonne réponse','opacity:.9');
+ E(8,28,18,8,2.2,'','Spieler · Joueurs','font-weight:800');
+ for(let i=1;i<=4;i++)E(27+(i-1)*10,28,8,8,2.8,i===P?'sel':'sec',i).onclick=()=>{P=i;render()};
+ E(10,41,80,5,1.8,'','Wähle ein Spiel · Choisis un jeu','opacity:.85');
+ MODES.forEach(([k,n,fr],i)=>{const b=E(8+(i%3)*29,48+Math.floor(i/3)*20,26,17,2.4,k==='mix'?'pri':'sec',`<div style="font-size:calc(var(--u)*3)">${n}</div><div style="font-size:calc(var(--u)*1.4);font-weight:400;opacity:.85">${fr}</div>`);b.onclick=()=>start(k)});
+ tools();focus1()}
+function start(k){mode=k;sc=Array(P).fill(0);cur=0;qn=0;scr='game';next()}
+function next(){if(qn>=P*PER){scr='result';render();return}Q=make(mode);tl=TIME;lock=false;render()}
+function heart(c){return `<svg viewBox="0 0 100 90"><path d="M50 86C10 56 0 36 0 23 0 9 12 0 25 0c13 0 22 8 25 15C53 8 62 0 75 0c13 0 25 9 25 23 0 13-10 33-50 63Z" fill="${c}" stroke="#fff" stroke-width="3"/></svg>`}
+function game(){clear();const left=Math.floor(qn/P)+1;
+ for(let i=0;i<P;i++)E(1.5+i*14,2,13,7,1.5,'chip'+(i===cur?' on':''),`Spieler ${i+1}<br>${sc[i]}`,`background:${PC[i]}`);
+ E(60,2,38.5,7,1.8,'',`Frage ${left}/${PER} · ${MODES.find(m=>m[0]===mode)[1]}`,'font-weight:700;align-items:flex-end;padding-right:1%');
+ if(P>1)E(25,10,50,5,2,'',`Spieler ${cur+1} ist dran · Joueur ${cur+1}, à toi !`,`color:${PC[cur]};font-weight:800;filter:brightness(1.4)`);
+ E(14,16,72,22,0,'card pop','');E(16,17,68,13,Q.q.length>14?3.8:6,'',Q.q,'font-weight:800');E(16,30,68,6,2.2,'',Q.sub,'opacity:.8');
+ const bar=E(20,40,60,2.2,0,'','','background:rgba(255,255,255,.2);border-radius:9px;justify-content:flex-start;align-items:stretch;flex-direction:row'),fill=document.createElement('div');fill.style.cssText='height:100%;border-radius:9px;background:#22c55e;width:100%;transition:width .1s linear';bar.appendChild(fill);
+ const hs=[];Q.o.forEach((t,j)=>{const h=E(5+j*23.5,48,21,26,0,'hs',`${heart(HC[(j+qn)%4])}<span style="font-size:calc(var(--u)*${Math.min(4.4,13/(t.length*.55)).toFixed(2)})">${t}</span>`,`animation-delay:${-j*.6}s`);h.onclick=()=>shoot(j);hs.push(h)});
+ E(45,84,10,12,0,'','','background:linear-gradient(#a78bfa,#6d28d9);clip-path:polygon(50% 0,100% 100%,0 100%);');
+ E(41,96,18,3,0,'','','background:#4c1d95;border-radius:9px');
+ tools();focus1();
+ tm=setInterval(()=>{if(lock)return;tl-=.1;fill.style.width=Math.max(0,tl/TIME*100)+'%';if(tl<TIME*.35)fill.style.background='#ef4444';if(tl<=0){lock=true;clearInterval(tm);buzz();finish(-1,hs)}},100)}
+function shoot(j){if(lock)return;lock=true;clearInterval(tm);const hs=[...S.querySelectorAll('.hs')],h=hs[j],R=S.getBoundingClientRect(),H=h.getBoundingClientRect();pew();
+ const b=document.createElement('div');b.className='bullet';b.style.left='49%';b.style.top='84%';S.appendChild(b);requestAnimationFrame(()=>{b.style.left=((H.left-R.left+H.width/2)/R.width*100-.8)+'%';b.style.top=((H.top-R.top+H.height/2)/R.height*100-1.5)+'%'});
+ setTimeout(()=>{b.remove();if(j===Q.c){ding()}else buzz();finish(j,hs)},290)}
+function finish(j,hs){const ok=j===Q.c,pts=ok?10+Math.ceil(Math.max(tl,0)/TIME*10):0;if(ok)sc[cur]+=pts;
+ hs.forEach((h,i)=>{h.disabled=true;if(i===Q.c)h.classList.add('good');else if(i===j)h.classList.add('bad')});
+ const hh=hs[Q.c].getBoundingClientRect(),R=S.getBoundingClientRect();
+ if(ok){const x=document.createElement('div');x.className='burst';x.textContent='★ ✦ ★';x.style.left=((hh.left-R.left)/R.width*100+4)+'%';x.style.top=((hh.top-R.top)/R.height*100-8)+'%';x.style.color='#fde047';S.appendChild(x)}
+ E(20,42.5,60,5,2.6,ok?'pop':'',ok?`✔ Richtig! +${pts}`:(j<0?`⏱ Zeit vorbei – richtig: ${Q.ans}`:`✘ Falsch – richtig: ${Q.ans}`),`font-weight:800;color:${ok?'#86efac':'#fca5a5'};text-shadow:0 2px 6px #000`);
+ const chips=S.querySelectorAll('.chip');chips[cur].innerHTML=`Spieler ${cur+1}<br>${sc[cur]}`;
+ setTimeout(()=>{qn++;cur=(cur+1)%P;next()},1700)}
+function result(){clear();const o=sc.map((s,i)=>[s,i]).sort((a,b)=>b[0]-a[0]),best=o[0][0],win=o.filter(x=>x[0]===best).map(x=>x[1]+1);
+ E(20,5,60,10,4.4,'pop',P===1?'Ergebnis':(win.length>1?'Unentschieden!':`Spieler ${win[0]} gewinnt!`),'font-weight:800;color:#ffe9a8');
+ E(20,15,60,5,2,'','Fin de la partie','opacity:.8');
+ o.forEach(([s,i],k)=>E(25,24+k*14,50,11,3.4,'chip on pop',`${k===0?'★ ':''}Spieler ${i+1}: ${s} Punkte`,`background:${PC[i]};animation-delay:${k*.12}s`));
+ E(26,24+P*14+4,22,10,2.2,'pri','↻ Nochmal').onclick=()=>start(mode);E(52,24+P*14+4,22,10,2.2,'sec','Menü').onclick=()=>{scr='home';render()};
+ best>=P*PER*14?fan():best>0?ding():buzz();tools();focus1()}
+addEventListener('keydown',e=>{const bs=[...S.querySelectorAll('button:not(:disabled)')].filter(b=>!/^(Ton|Musik)/.test(b.textContent)),i=bs.indexOf(document.activeElement);
+ if(['ArrowRight','ArrowDown'].includes(e.key)){e.preventDefault();(bs[i+1]||bs[0]).focus()}
+ else if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();(bs[i-1]||bs[bs.length-1]).focus()}
+ else if(scr==='game'&&!lock&&['1','2','3','4'].includes(e.key))shoot(+e.key-1)});
+render();
+</script></body></html>

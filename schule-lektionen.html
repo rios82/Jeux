@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Schule &amp; Lehrer – Lektionen</title>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--ink:#2b2118;--chalk:#f4f1e8}
+html,body{height:100%;margin:0;background:#1b120b;font-family:"Trebuchet MS",Verdana,Arial,sans-serif;overflow:hidden}
+#wrap{height:100%;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:min(100vw,calc((100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))*16/9));aspect-ratio:16/9;overflow:hidden;color:var(--chalk);
+ background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.07),transparent 55%),radial-gradient(ellipse at 80% 90%,rgba(0,0,0,.25),transparent 60%),#2f5d46;
+ border:calc(var(--u,10px)*1.1) solid #8a5a2b;box-shadow:inset 0 0 calc(var(--u,10px)*4) rgba(0,0,0,.5)}
+#stage:before{content:"";position:absolute;left:0;right:0;bottom:0;height:4%;background:linear-gradient(#8a5a2b,#6b4220);pointer-events:none}
+.b{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;margin:0;line-height:1.2}
+button.b{cursor:pointer;font-family:inherit;font-weight:700;padding:0 .6em;border-radius:calc(var(--u)*1.2);border:calc(var(--u)*.25) solid var(--chalk);background:rgba(0,0,0,.28);color:var(--chalk);transition:transform .15s}
+button.b:hover:not(:disabled),button.b:focus{transform:scale(1.06);outline:calc(var(--u)*.4) solid #facc15;outline-offset:calc(var(--u)*.15)}
+.pri{background:#e8a317!important;color:#2b2118!important;border-color:#fff3c4!important}
+.card{background:#fff8e7;color:var(--ink);border-radius:calc(var(--u)*2);border:calc(var(--u)*.4) solid #d9b779;box-shadow:0 calc(var(--u)*.6) calc(var(--u)*1.5) rgba(0,0,0,.4)}
+.lc{background:#fff8e7!important;color:var(--ink)!important;border-color:#d9b779!important}
+.opt{flex-direction:row!important;background:#fff8e7!important;color:var(--ink)!important;border-color:#d9b779!important}
+.opt.good{background:#16a34a!important;color:#fff!important}.opt.bad{background:#dc2626!important;color:#fff!important}
+.m{color:#1d4ed8}.f{color:#be123c}.n{color:#15803d}.o{color:var(--ink)}
+.hud{background:rgba(0,0,0,.4);border-radius:calc(var(--u)*2);font-weight:700}
+.pop{animation:pop .45s ease-out}.fade{animation:fd .35s}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.12)}100%{transform:scale(1)}}@keyframes fd{from{opacity:0}to{opacity:1}}
+.dots i{display:inline-block;width:calc(var(--u)*1);height:calc(var(--u)*1);border-radius:50%;background:rgba(255,255,255,.3);margin:0 calc(var(--u)*.3)}.dots i.on{background:#facc15}
+</style></head><body><div id="wrap"><div id="stage"></div></div>
+<script>
+const S=document.getElementById('stage');
+const L=[
+{t:'Lektion 1',s:'Menschen und Ort in der Schule',w:[
+['der Lehrer','le professeur','Der Lehrer erklärt die Regel.'],['die Lehrerin','la professeure','Die Lehrerin ist freundlich.'],
+['der Schüler','l’élève (garçon)','Der Schüler liest ein Buch.'],['die Schülerin','l’élève (fille)','Die Schülerin schreibt einen Satz.'],
+['die Klasse','la classe','Die Klasse ist groß.'],['das Klassenzimmer','la salle de classe','Das Klassenzimmer ist hell.'],
+['die Schule','l’école','Ich gehe zur Schule.'],['der Unterricht','le cours','Der Unterricht beginnt um acht Uhr.']]},
+{t:'Lektion 2',s:'Schulsachen',w:[
+['der Stift','le stylo','Ich schreibe mit dem Stift.'],['das Heft','le cahier','Das Heft ist blau.'],['das Buch','le livre','Das Buch liegt auf dem Tisch.'],
+['die Tafel','le tableau','Der Lehrer schreibt an die Tafel.'],['die Schultasche','le cartable','Meine Schultasche ist schwer.'],
+['das Lineal','la règle','Das Lineal ist lang.'],['die Schere','les ciseaux','Mit der Schere schneide ich Papier.'],['der Kleber','la colle','Ich brauche den Kleber.']]},
+{t:'Lektion 3',s:'Danke sagen',w:[
+['Danke!','Merci !','Danke, Frau Müller!'],['Vielen Dank!','Merci beaucoup !','Vielen Dank für die Hilfe!'],['die Hilfe','l’aide','Danke für Ihre Hilfe.'],
+['das Geschenk','le cadeau','Das Geschenk ist für den Lehrer.'],['die Blume','la fleur','Die Blume ist rot.'],
+['lernen','apprendre','Wir lernen Deutsch.'],['helfen','aider','Der Lehrer hilft uns.'],['gut','bien / bon','Das ist sehr gut!']]}];
+let scr='menu',li=0,ci=0,flip=false,Q=[],qi=0,pick=-1,sc=0,snd=true,mus=false,ac=null,musT=null,nextT=0,stp=0;
+const E=(x,y,w,h,pt,cls,html,css)=>{const d=document.createElement(/^(pri|sec|lc|opt)/.test(cls||'')?'button':'div');d.className='b '+(cls||'');d.style.cssText=`left:${x}%;top:${y}%;width:${w}%;height:${h}%;font-size:calc(var(--u)*${pt});${css||''}`;d.innerHTML=html;S.appendChild(d);return d};
+const size=()=>S.style.setProperty('--u',(S.clientWidth/100)+'px');addEventListener('resize',size);
+const gen=w=>/^der /.test(w)?'m':/^die /.test(w)?'f':/^das /.test(w)?'n':'o';
+const col=w=>{const g=gen(w);return g==='o'?w:`<span class="${g}">${w.split(' ')[0]}</span> ${w.split(' ').slice(1).join(' ')}`};
+const ctx=()=>ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+function note(f,t,d,ty,v){const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.05)}
+function tone(f,d,ty='sine',v=.25,w=0){if(!snd)return;try{ctx();note(f,ac.currentTime+w,d,ty,v)}catch(e){}}
+const ding=()=>{tone(660,.15);tone(990,.35,'sine',.25,.12)},buzz=()=>tone(150,.45,'sawtooth',.2),fan=()=>[523,659,784,1047].forEach((f,i)=>tone(f,.3,'sine',.25,i*.14));
+const CH=[[60,64,67],[57,60,64],[65,69,72],[67,71,74]],mf=m=>440*Math.pow(2,(m-69)/12),ARP=[0,1,2,1,0,1,2,1];
+function sched(){while(nextT<ac.currentTime+.3){const c=CH[Math.floor(stp/8)%4],i=stp%8;note(mf(c[ARP[i]]+12),nextT,.3,'sine',.04);if(i%4===0)note(mf(c[0]-12),nextT,.9,'sine',.08);nextT+=.3;stp++}}
+function music(on){mus=on;if(on){try{ctx();if(ac.state==='suspended')ac.resume();nextT=ac.currentTime+.1;musT=setInterval(sched,100)}catch(e){}}else clearInterval(musT)}
+const canSay='speechSynthesis' in window;
+function say(t){if(!canSay)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/\s*\(.*\)/,''));u.lang='de-DE';u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
+function clear(){S.innerHTML='';size()}
+const focus1=()=>{const b=S.querySelector('button:not(:disabled)');b&&b.focus({preventScroll:true})};
+function tools(){E(1.5,92,11,5.3,1.2,'sec',snd?'Ton : ja':'Ton : nein').onclick=()=>{snd=!snd;if(snd)ding();render()};
+ E(13.5,92,13,5.3,1.2,'sec',mus?'Musik : ja':'Musik : nein').onclick=()=>{music(!mus);render()}}
+function render(){S.classList.remove('fade');void S.offsetWidth;S.classList.add('fade');({menu,cards,quiz,result}[scr])()}
+function menu(){clear();E(10,5,80,10,4.6,'','Schule und Lehrer','font-weight:800;color:#ffe9a8');E(10,16,80,6,2.2,'','Wähle eine Lektion · Choisis une leçon (flèches + OK)','opacity:.9');
+ L.forEach((l,i)=>{const b=E(5+i*31.5,28,28,40,2,'lc',`<div style="font-size:calc(var(--u)*3.2);font-weight:800">${l.t}</div><div style="margin:.6em 0;font-weight:400">${l.s}</div><div style="font-size:calc(var(--u)*1.5);font-weight:400;opacity:.75">8 Karten + Quiz</div>`);b.onclick=()=>{li=i;ci=0;flip=false;scr='cards';render()}});
+ E(30,73,40,10,2.4,'pri','Mix-Quiz (24 Wörter)').onclick=()=>{li=-1;startQuiz()};tools();focus1()}
+function cards(){const l=L[li],w=l.w[ci];clear();E(2,3,96,6,2.2,'',`${l.t} · ${l.s}`,'color:#ffe9a8;font-weight:800');
+ const dots='<div class="dots">'+l.w.map((_,i)=>`<i class="${i===ci?'on':''}"></i>`).join('')+'</div>';E(20,10,60,4,1,'',dots);
+ const c=E(18,16,64,50,0,'card pop','',''),L2=flip?'':'';
+ E(20,18,60,22,6.4,'',`<div>${col(w[0])}</div>`,'color:var(--ink);font-weight:800');
+ if(flip){E(20,38,60,8,3.6,'',w[1],'color:#6b4a2b;font-weight:700');E(20,47,60,12,2.3,'',`<i>${w[2]}</i>`,'color:var(--ink)')}
+ else E(20,42,60,10,2,'','Tippe auf „Umdrehen“ · Touche « Umdrehen » pour voir la traduction','color:#8a6a4a');
+ E(2,69,24,9,2,'sec','◀ Zurück').onclick=()=>{if(ci>0){ci--;flip=false;render()}else{scr='menu';render()}};
+ E(29,69,20,9,2.2,'sec','Umdrehen').onclick=()=>{flip=!flip;if(flip&&0)say(w[0]);render()};
+ if(canSay)E(51,69,18,9,2.2,'sec','Hören').onclick=()=>say(w[0]);
+ const last=ci===l.w.length-1;E(canSay?71:56,69,27,9,2.2,'pri',last?'Quiz starten ▶':'Weiter ▶').onclick=()=>{if(last)startQuiz();else{ci++;flip=false;render()}};
+ E(2,80,24,7,1.5,'sec','Menü').onclick=()=>{scr='menu';render()};tools();
+ const f=[...S.querySelectorAll('button')].find(b=>b.textContent==='Umdrehen');f&&f.focus({preventScroll:true})}
+function startQuiz(){const pool=li<0?L.flatMap(l=>l.w):L[li].w;const all=L.flatMap(l=>l.w);
+ const sh=a=>a.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+ Q=sh(pool).slice(0,8).map(w=>{const d=sh(pool.filter(x=>x[0]!==w[0])).slice(0,3);const o=sh([w,...d]);return{q:`Wie heißt „${w[1]}“ auf Deutsch?`,o:o.map(x=>x[0]),c:o.indexOf(w),w}});
+ qi=0;sc=0;pick=-1;scr='quiz';render()}
+function quiz(){const q=Q[qi],ans=pick>=0;clear();E(2,3,60,6,2.2,'',li<0?'Mix-Quiz':`${L[li].t} · Quiz`,'color:#ffe9a8;font-weight:800;align-items:flex-start');
+ E(66,3,32,6,2,'hud',`Frage ${qi+1}/${Q.length} · Punkte: ${sc}`);
+ E(10,13,80,14,3,'card','',''); E(12,14,76,12,3,'',q.q,'color:var(--ink);font-weight:800');
+ q.o.forEach((t,j)=>{const b=E(10+(j%2)*41,31+Math.floor(j/2)*14,39,12,2.8,'opt'+(ans&&j===q.c?' good':'')+(ans&&j===pick&&j!==q.c?' bad':''),`<span style="opacity:.6;margin-right:.5em">${'ABCD'[j]}</span>${t}`);if(ans)b.disabled=true;else b.onclick=()=>{pick=j;if(j===q.c){sc++;ding()}else buzz();render()}});
+ if(ans){const ok=pick===q.c;E(10,60,80,9,2.6,ok?'pop':'',ok?`✔ Richtig! – ${q.w[0]} = ${q.w[1]}`:`✘ Falsch – richtig: ${q.w[0]} = ${q.w[1]}`,`font-weight:800;color:${ok?'#86efac':'#fca5a5'}`);
+  E(36,72,28,10,2.6,'pri',qi<Q.length-1?'Nächste Frage ▶':'Ergebnis ▶').onclick=()=>{if(qi<Q.length-1){qi++;pick=-1}else scr='result';render()};
+  if(canSay)E(68,72,14,10,1.8,'sec','Hören').onclick=()=>say(q.w[0])}
+ else E(2,80,16,7,1.5,'sec','◀ Karten').onclick=()=>{if(li<0){scr='menu'}else{ci=0;flip=false;scr='cards'}render()};
+ tools();focus1()}
+function result(){const n=Q.length,r=sc===n?'Super! Alles richtig!':sc>=6?'Sehr gut!':sc>=4?'Gut gemacht!':'Noch einmal üben!';clear();
+ E(20,8,60,70,0,'card pop','');E(22,11,56,8,3,'','ERGEBNIS','color:#6b4a2b;font-weight:800');E(22,20,56,20,11,'pop',`${sc} / ${n}`,'color:var(--ink);font-weight:800');
+ E(22,42,56,10,3.4,'',r,'color:#be123c;font-weight:800');
+ E(24,58,24,10,2,'pri','↻ Nochmal').onclick=startQuiz;E(51,58,25,10,2,'lc','Menü').onclick=()=>{scr='menu';render()};
+ sc===n?fan():sc>=4?ding():buzz();tools();focus1()}
+addEventListener('keydown',e=>{const bs=[...S.querySelectorAll('button:not(:disabled)')].filter(b=>!/^(Ton|Musik)/.test(b.textContent)),i=bs.indexOf(document.activeElement);
+ if(scr==='cards'&&e.key==='ArrowRight'){e.preventDefault();const l=L[li];if(ci<l.w.length-1){ci++;flip=false;render()}}
+ else if(scr==='cards'&&e.key==='ArrowLeft'){e.preventDefault();if(ci>0){ci--;flip=false;render()}}
+ else if(['ArrowRight','ArrowDown'].includes(e.key)){e.preventDefault();(bs[i+1]||bs[0]).focus()}
+ else if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();(bs[i-1]||bs[bs.length-1]).focus()}
+ else if(scr==='quiz'&&pick<0&&['1','2','3','4'].includes(e.key)){const j=+e.key-1,q=Q[qi];pick=j;if(j===q.c){sc++;ding()}else buzz();render()}
+ else if(scr==='cards'&&(e.key==='ArrowUp')){flip=!flip;render()}});
+render();
+</script></body></html>

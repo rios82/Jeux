@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vogel-Labyrinth</title>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:#0b1f0e;font-family:"Trebuchet MS",Verdana,Arial,sans-serif;overflow:hidden}
+#wrap{height:100%;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:min(100vw,calc((100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))*16/9));aspect-ratio:16/9;overflow:hidden;color:#fff}
+#stage>svg.bg{position:absolute;inset:0;width:100%;height:100%}
+.b{position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;line-height:1.15}
+button.b{cursor:pointer;font-family:inherit;font-weight:700;color:#fff;background:rgba(10,30,15,.55);border:calc(var(--u)*.25) solid #fff;border-radius:calc(var(--u)*1.4);transition:transform .15s}
+button.b:hover:not(:disabled),button.b:focus{transform:scale(1.06);outline:calc(var(--u)*.4) solid #facc15;outline-offset:calc(var(--u)*.15)}
+.pri{background:#f59e0b!important;color:#1b1030!important;border-color:#fff3c4!important}
+.bird{flex-direction:column;background:transparent!important;border:0!important;padding:0!important;border-radius:0!important}
+.bird .bg2{position:absolute;inset:0;width:100%;height:100%;display:flex}
+.bird .lbl{position:absolute;bottom:-1%;left:0;right:0;background:rgba(10,30,15,.75);border-radius:calc(var(--u)*1.2);padding:.2em .4em;font-size:calc(var(--u)*2.2);border:calc(var(--u)*.2) solid #fff}
+.bird:disabled{opacity:1}.bird.good .lbl{background:#16a34a;border-color:#fff}.bird.bad .lbl{background:#dc2626;border-color:#fff}.bird.bad svg{filter:grayscale(1) brightness(.6)}
+.hero{position:absolute;width:5.5%;height:calc(5.5% * 16/9);transition:left .9s ease-in-out,top .9s ease-in-out;z-index:5;pointer-events:none}
+.card{background:rgba(255,255,255,.93);color:#1d2b1f;border-radius:calc(var(--u)*2);border:calc(var(--u)*.35) solid #d4a017;box-shadow:0 calc(var(--u)*.6) calc(var(--u)*1.5) rgba(0,0,0,.4)}
+.hud{background:rgba(0,0,0,.45);border-radius:calc(var(--u)*2);font-weight:700}
+.pop{animation:pop .45s ease-out}.shake{animation:shake .4s}.fade{animation:fd .35s}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.12)}100%{transform:scale(1)}}@keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}@keyframes fd{from{opacity:0}to{opacity:1}}
+.fly{animation:flap .5s ease-in-out infinite alternate}@keyframes flap{to{transform:translateY(calc(var(--u)*-.6))}}
+</style></head><body><div id="wrap"><div id="stage"></div></div>
+<script>
+const S=document.getElementById('stage');
+const SVGBG=`<svg class="bg" viewBox="0 0 1600 900" preserveAspectRatio="none"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#e0f2fe"/></linearGradient></defs><rect width="1600" height="900" fill="url(#sk)"/><rect y="560" width="1600" height="340" fill="#6abf4b"/><ellipse cx="800" cy="600" rx="900" ry="120" fill="#86d15f"/>${[[120,150],[420,95],[760,190],[1100,110],[1420,170]].map(([x,y])=>`<rect x="${x}" y="${y+60}" width="26" height="150" fill="#7c4a24"/><circle cx="${x+13}" cy="${y}" r="92" fill="#2f8f3a"/><circle cx="${x-30}" cy="${y+30}" r="50" fill="#3da24a"/>`).join('')}<path d="M160 730 C300 620 420 720 520 600 S760 520 860 600 S1180 720 1280 600 S1480 560 1500 620" fill="none" stroke="#f3d28b" stroke-width="22" stroke-dasharray="2 18" stroke-linecap="round"/></svg>`;
+const BX=[12,32,52,72],BY=[30,50,28,54],BW=20,BH=22;
+const BIRD=['#e11d48','#2563eb','#f59e0b','#16a34a'],LET='ABCD';
+const bird=c=>`<svg viewBox="0 0 100 80" preserveAspectRatio="xMidYMid meet" style="position:absolute;left:0;top:0;width:100%;height:70%"><path d="M30 46 Q16 24 34 16 Q40 34 48 40Z" fill="${c}" stroke="#fff" stroke-width="2"/><ellipse cx="48" cy="46" rx="30" ry="21" fill="${c}" stroke="#fff" stroke-width="3"/><circle cx="72" cy="30" r="14" fill="${c}" stroke="#fff" stroke-width="3"/><polygon points="84,27 98,31 84,36" fill="#f59e0b"/><circle cx="76" cy="26" r="3.5" fill="#111"/></svg>`;
+const QS0=[
+ ['Welches Tier kann fliegen?',['der Vogel','der Hund','die Katze','der Fisch'],'der Vogel = l’oiseau'],
+ ['Wie heißt „vert“ auf Deutsch?',['grün','rot','blau','gelb'],'grün = vert'],
+ ['Der Vogel ___ im Baum.',['sitzt','sitze','sitzen','sitzst'],'er sitzt = il est assis'],
+ ['Wie heißt „deux“ auf Deutsch?',['zwei','drei','eins','vier'],'zwei = deux'],
+ ['Wie heißt „le nid“ auf Deutsch?',['das Nest','der Baum','die Blume','der Stein'],'das Nest = le nid'],
+ ['Der Baum ist sehr ___.',['hoch','heiß','nass','tief'],'hoch = haut'],
+ ['Welcher Artikel? ___ Baum',['der','die','das','den'],'der Baum (masculin)'],
+ ['Wie heißt „la fleur“ auf Deutsch?',['die Blume','der Berg','das Haus','der Fluss'],'die Blume = la fleur']];
+const sh=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+let Q=[],qi=0,sc=0,pick=-1,scr='home',snd=true,mus=false,ac=null,musT=null,nextT=0,stp=0,hero=[7.25,76];
+const E=(x,y,w,h,pt,cls,html,css)=>{const d=document.createElement(/^(pri|bird)/.test(cls||'')||cls==='sec'?'button':'div');d.className='b '+(cls||'');d.style.cssText=`left:${x}%;top:${y}%;width:${w}%;height:${h}%;font-size:calc(var(--u)*${pt});${css||''}`;d.innerHTML=html;S.appendChild(d);return d};
+const size=()=>S.style.setProperty('--u',(S.clientWidth/100)+'px');addEventListener('resize',size);
+const ctx=()=>ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+function note(f,t,d,ty,v){const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.05)}
+function tone(f,d,ty='sine',v=.25,w=0){if(!snd)return;try{ctx();note(f,ac.currentTime+w,d,ty,v)}catch(e){}}
+const ding=()=>{tone(660,.15);tone(990,.35,'sine',.25,.12)},buzz=()=>tone(150,.45,'sawtooth',.2),flap=()=>{tone(700,.12,'triangle',.15);tone(900,.12,'triangle',.12,.1)},fan=()=>[523,659,784,1047].forEach((f,i)=>tone(f,.3,'sine',.25,i*.14));
+const CH=[[57,60,64],[53,57,60],[60,64,67],[55,59,62]],mf=m=>440*Math.pow(2,(m-69)/12),ARP=[0,1,2,1,0,1,2,1];
+function sched(){while(nextT<ac.currentTime+.3){const c=CH[Math.floor(stp/8)%4],i=stp%8;note(mf(c[ARP[i]]+12),nextT,.3,'sine',.04);if(i%4===0)note(mf(c[0]-12),nextT,.9,'sine',.08);nextT+=.3;stp++}}
+function music(on){mus=on;clearInterval(musT);if(on){try{ctx();if(ac.state==='suspended')ac.resume();nextT=ac.currentTime+.1;musT=setInterval(sched,100)}catch(e){}}}
+function clear(){S.innerHTML=SVGBG;size()}
+const focus1=()=>{const b=S.querySelector('button:not(:disabled)');b&&b.focus({preventScroll:true})};
+function tools(){E(1.5,92,11,5.3,1.2,'sec',snd?'Ton : ja':'Ton : nein').onclick=()=>{snd=!snd;if(snd)ding();render()};E(13.5,92,13,5.3,1.2,'sec',mus?'Musik : ja':'Musik : nein').onclick=()=>{music(!mus);render()}}
+function render(){S.classList.remove('fade');void S.offsetWidth;S.classList.add('fade');({home,game,result}[scr])()}
+function heroEl(){const h=document.createElement('div');h.className='hero fly';h.style.left=hero[0]+'%';h.style.top=hero[1]+'%';h.innerHTML=`<svg viewBox="0 0 100 100" style="width:100%;height:100%;overflow:visible"><circle cx="50" cy="50" r="42" fill="#fde047" stroke="#fff" stroke-width="6"/><path d="M50 22 L57 42 L78 42 L61 55 L67 76 L50 63 L33 76 L39 55 L22 42 L43 42Z" fill="#dc2626"/></svg>`;S.appendChild(h);return h}
+function home(){clear();E(10,8,80,14,6,'','Vogel-Labyrinth','font-weight:800;color:#fff7c2;text-shadow:0 4px 10px #000');
+ E(16,25,68,8,2.4,'card','<div style="padding:.3em">Wähle den richtigen Vogel und fliege zum Nest!<br><small>Choisis le bon oiseau pour avancer. Flèches + OK, ou touches A B C D.</small></div>','color:#1d2b1f;font-weight:700;padding:0 1em');
+ E(38,44,24,11,3,'pri','Start ▶').onclick=start;tools();focus1()}
+function start(){const all=QS0.map(([q,o,e])=>{const s=sh(o);return{q,e,o:s,c:s.indexOf(o[0])}});Q=sh(all).slice(0,8);qi=0;sc=0;pick=-1;hero=[7.25,76];scr='game';render()}
+function game(){clear();const q=Q[qi],done=pick>=0;
+ E(2,3,96,3,1.6,'',`Frage ${qi+1}/${Q.length} · Punkte: ${sc}`,'font-weight:700;color:#fff7c2;text-shadow:0 2px 6px #000');
+ E(20,8,60,13,3.4,'card',q.q,'font-weight:800;padding:0 1em');
+ E(6,88,6,6,0,'','','');
+ q.o.forEach((t,j)=>{const bx=BX[j],by=BY[j],ok=j===q.c,bad=done&&j===pick&&!ok;
+  const b=E(bx,by,BW,BH,0,'bird'+(done&&ok?' good':'')+(bad?' bad':''),`<div class="bg2">${bird(BIRD[j])}</div><span class="lbl" style="font-size:calc(var(--u)*2.2)"><b>${LET[j]}</b> ${t}</span>`);
+  if(done)b.disabled=true;else b.onclick=()=>choose(j)});
+ const h=heroEl();
+ if(done){const ok=pick===q.c;E(4,82,66,8,2.4,ok?'pop':'shake',ok?`✔ RICHTIG! ${q.e}`:`✘ FALSCH! Richtig: ${q.o[q.c]} – ${q.e}`,`font-weight:800;color:${ok?'#14532d':'#7f1d1d'};background:rgba(255,255,255,.95);border-radius:calc(var(--u)*1.5);border:calc(var(--u)*.3) solid ${ok?'#16a34a':'#dc2626'}`);
+  E(74,83,22,8,2.2,'pri',qi<Q.length-1?'Weiter ▶':'Ergebnis ▶').onclick=()=>{if(qi<Q.length-1){qi++;pick=-1;render()}else{scr='result';render()}}}
+ else E(2,82,20,8,1.8,'',`A · B · C · D`,'color:#fff;opacity:.85;font-weight:700');
+ tools();if(done)focus1();else{const b=S.querySelector('button.bird');b&&b.focus({preventScroll:true})}}
+function choose(j){pick=j;const q=Q[qi];if(j===q.c){sc++;hero=[BX[j]+7.25,BY[j]-10];flap();ding()}else buzz();render();setTimeout(()=>{const h=S.querySelector('.hero');if(h&&j===q.c){h.style.left=hero[0]+'%';h.style.top=hero[1]+'%'}},60)}
+function result(){clear();const n=Q.length,r=sc===n?'Super! Alles richtig!':sc>=6?'Sehr gut!':sc>=4?'Gut gemacht!':'Noch einmal üben!';
+ E(20,10,60,70,0,'card pop','');E(22,13,56,8,3.2,'','ERGEBNIS','color:#6b4a2b;font-weight:800');E(22,23,56,18,11,'pop',`${sc} / ${n}`,'color:#1d2b1f;font-weight:800');
+ E(22,44,56,8,3.2,'',r,'color:#be123c;font-weight:800');
+ E(24,60,24,10,2.2,'pri','↻ Nochmal').onclick=start;E(52,60,24,10,2.2,'bird','Menü','background:rgba(10,30,15,.9);border:calc(var(--u)*.25) solid #fff').onclick=()=>{scr='home';render()};
+ sc===n?fan():sc>=4?ding():buzz();tools();focus1()}
+addEventListener('keydown',e=>{const bs=[...S.querySelectorAll('button:not(:disabled)')].filter(b=>!/^(Ton|Musik)/.test(b.textContent)),i=bs.indexOf(document.activeElement);
+ if(['ArrowRight','ArrowDown'].includes(e.key)){e.preventDefault();(bs[i+1]||bs[0]).focus()}
+ else if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();(bs[i-1]||bs[bs.length-1]).focus()}
+ else if(scr==='game'&&pick<0&&['1','2','3','4','a','b','c','d','A','B','C','D'].includes(e.key)){choose('abcd'.indexOf(e.key.toLowerCase())>=0?'abcd'.indexOf(e.key.toLowerCase()):+e.key-1)}
+ else if(scr==='game'&&pick>=0&&(e.key==='n'||e.key===' ')){e.preventDefault();if(qi<Q.length-1){qi++;pick=-1;render()}else{scr='result';render()}}});
+render();
+</script></body></html>
