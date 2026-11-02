@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Allgemeinwissen – Wissen der Welt</title>
+<style>
+:root{color-scheme:dark;box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:"Trebuchet MS",Verdana,Arial,sans-serif;overflow:hidden;background:#2b1d14}
+#stage{position:relative;width:min(100vw,calc(100vh*16/9));height:min(100vh,calc(100vw*9/16));margin:auto;overflow:hidden;
+ background:radial-gradient(ellipse at 70% 0%,#ffd9a0 0,#f2b56b 30%,#8a5a3b 75%,#3d2617 100%);color:#2b1d14}
+.wall{position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 40px,transparent 40px 80px)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:28%;background:repeating-linear-gradient(90deg,#9b6a43 0 120px,#8a5c39 120px 124px);transform:perspective(600px) rotateX(35deg);transform-origin:bottom}
+.win{position:absolute;right:6%;top:8%;width:18%;height:34%;border:14px solid #6b4226;border-radius:12px;background:linear-gradient(#bfe6ff,#e9f7ff);box-shadow:inset 0 0 40px rgba(255,255,255,.6)}
+.lamp{position:absolute;left:6%;top:10%;width:70px;height:70px;border-radius:50%;background:radial-gradient(#fff6c4,#f7c948 60%,transparent 70%);filter:blur(1px)}
+.card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:76%;max-width:1100px;background:rgba(255,250,240,.96);border-radius:28px;padding:3.2% 4%;box-shadow:0 20px 50px rgba(0,0,0,.35);border:6px solid #e9a33b}
+.top{display:flex;justify-content:space-between;font-weight:800;font-size:clamp(14px,2vw,22px);color:#6b4226;margin-bottom:1.5%}
+.q{font-size:clamp(22px,3.6vw,44px);font-weight:800;text-align:center;margin:1% 0 3%;min-height:2.4em}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:2.2%}
+.opt{font-family:inherit;font-size:clamp(18px,2.8vw,34px);font-weight:800;padding:3.4% 2%;border:4px solid #c98a3c;border-radius:20px;background:#fff1d6;color:#2b1d14;cursor:pointer;transition:transform .15s}
+.opt:hover,.opt:focus{transform:scale(1.04);outline:5px solid #facc15;outline-offset:3px}
+.opt .l{opacity:.6;margin-right:.4em}
+.opt.good{background:#16a34a!important;color:#fff!important;border-color:#fff!important}
+.opt.bad{background:#dc2626!important;color:#fff!important;border-color:#fff!important}
+.opt:disabled{cursor:default}
+.exp{margin-top:3%;padding:2.5%;border-radius:18px;font-size:clamp(16px,2.2vw,26px);line-height:1.35;display:none}
+.exp.ok{background:#dcfce7;color:#14532d;display:block}
+.exp.ko{background:#fee2e2;color:#7f1d1d;display:block}
+.btns{display:flex;justify-content:center;gap:3%;margin-top:3%}
+.pri,.sec{font-family:inherit;font-size:clamp(16px,2.2vw,26px);font-weight:800;padding:1.4% 3%;border-radius:18px;border:4px solid #7c4a1e;cursor:pointer}
+.pri{background:#f59e0b;color:#2b1d14}.sec{background:#fff;color:#6b4226}
+.pri:focus,.sec:focus{outline:5px solid #facc15;outline-offset:3px}
+.res{text-align:center}.res .big{font-size:clamp(60px,10vw,140px);font-weight:900;color:#c2410c;line-height:1}
+.tools{position:absolute;left:1.5%;bottom:1.5%;display:flex;gap:1%}
+.tools button{font-family:inherit;font-size:16px;font-weight:700;padding:.6% 1.4%;border-radius:12px;border:2px solid #fff;background:rgba(43,29,20,.7);color:#fff;cursor:pointer}
+</style></head><body>
+<div id="stage"><div class="wall"></div><div class="win"></div><div class="lamp"></div><div class="floor"></div>
+<div class="card" id="card"></div>
+<div class="tools"><button id="snd">Ton: ja</button><button id="mus">Musik: nein</button></div></div>
+<script>
+const QS=[{"q": "Wie viele Kontinente gibt es?", "o": ["7", "5", "6", "8"], "c": 0, "e": "Es gibt 7 Kontinente.", "f": "Il y a 7 continents."}, {"q": "Welcher Planet ist der Sonne am nächsten?", "o": ["Merkur", "Venus", "Mars", "Erde"], "c": 0, "e": "Merkur ist der Sonne am nächsten.", "f": "Mercure est la planète la plus proche du Soleil."}, {"q": "Wie heißt die Hauptstadt von Frankreich?", "o": ["Paris", "Lyon", "Marseille", "Nizza"], "c": 0, "e": "Die Hauptstadt von Frankreich ist Paris.", "f": "La capitale de la France est Paris."}, {"q": "Welches Tier ist das größte Tier der Erde?", "o": ["Blauwal", "Elefant", "Giraffe", "Nilpferd"], "c": 0, "e": "Der Blauwal ist das größte Tier der Erde.", "f": "La baleine bleue est le plus grand animal du monde."}, {"q": "Wie viele Beine hat eine Spinne?", "o": ["8", "6", "10", "4"], "c": 0, "e": "Spinnen haben 8 Beine. Insekten haben 6.", "f": "Les araignées ont 8 pattes. Les insectes en ont 6."}, {"q": "Welches Gas atmen wir zum Leben ein?", "o": ["Sauerstoff", "Helium", "Stickstoff", "Kohlendioxid"], "c": 0, "e": "Zum Leben atmen wir Sauerstoff ein.", "f": "Pour vivre, nous inspirons de l'oxygène."}, {"q": "In welchem Land steht die Chinesische Mauer?", "o": ["China", "Japan", "Indien", "Korea"], "c": 0, "e": "Die Chinesische Mauer liegt in China.", "f": "La Grande Muraille de Chine se trouve en Chine."}, {"q": "Wie viele Tage hat ein Schaltjahr?", "o": ["366", "365", "364", "360"], "c": 0, "e": "Ein Schaltjahr hat 366 Tage.", "f": "Une année bissextile compte 366 jours."}];
+// Antworten mischen, richtige Antwort merken
+let Q=[],i=0,sc=0,pick=-1,snd=true,mus=false,ac=null,mT=null,nT=0,mS=0;
+const card=document.getElementById('card');
+const shuf=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+function prep(){Q=shuf(QS).map(e=>{const good=e.o[e.c];const o=shuf(e.o);return{...e,o,c:o.indexOf(good)}});i=0;sc=0;pick=-1;show()}
+function show(){
+ if(i>=Q.length){return result()}
+ const q=Q[i],done=pick>=0;
+ card.innerHTML=`<div class="top"><span>Frage ${i+1}/${Q.length}</span><span>Punkte: ${sc}</span></div>
+ <div class="q">${q.q}</div>
+ <div class="grid">${q.o.map((t,j)=>`<button class="opt${done&&j===q.c?' good':''}${done&&j===pick&&j!==q.c?' bad':''}" data-j="${j}" ${done?'disabled':''}><span class="l">${'ABCD'[j]}</span>${t}</button>`).join('')}</div>
+ ${done?`<div class="exp ${pick===q.c?'ok':'ko'}"><b>${pick===q.c?'✔ Richtig!':'✘ Falsch. Richtig: '+q.o[q.c]}</b><br>${q.e}<br><i>${q.f}</i></div>
+ <div class="btns"><button class="pri" id="nx">${i<Q.length-1?'Nächste Frage ▶':'Ergebnis ▶'}</button></div>`:''}`;
+ card.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.j));
+ const f=card.querySelector(done?'#nx':'.opt:not(:disabled)');if(f)f.focus();
+ const nx=document.getElementById('nx');if(nx)nx.onclick=next;
+}
+function answer(j){if(pick>=0)return;pick=j;if(j===Q[i].c){sc++;tone(660,.15);tone(990,.3,.12)}else tone(150,.4,'sawtooth');show()}
+function next(){i++;pick=-1;show()}
+function result(){const n=Q.length,r=sc===n?'Super! Alles richtig!':sc>=6?'Sehr gut!':sc>=4?'Gut gemacht!':'Noch einmal üben!';
+ card.innerHTML=`<div class="res"><div class="top" style="justify-content:center">Ergebnis</div><div class="big">${sc} / ${n}</div><p style="font-size:clamp(20px,3vw,36px);font-weight:800;color:#c2410c">${r}</p><div class="btns"><button class="pri" id="again">↻ Nochmal</button></div></div>`;
+ document.getElementById('again').onclick=prep;document.getElementById('again').focus();
+ if(sc===n)[523,659,784,1047].forEach((f,k)=>tone(f,.3,'sine',k*.14))}
+// Ton
+function ctx(){ac=ac||new (window.AudioContext||window.webkitAudioContext)();return ac}
+function tone(f,d,ty='sine',w=0,delay=0){if(!snd)return;try{ctx();const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(.2,ac.currentTime+delay);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+delay+d);o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+delay);o.stop(ac.currentTime+delay+d+.05)}catch(e){}}
+const CH=[[57,60,64],[53,57,60],[60,64,67],[55,59,62]],mf=m=>440*Math.pow(2,(m-69)/12);
+function sched(){while(nT<ac.currentTime+.3){const c=CH[Math.floor(mS/8)%4],k=mS%8;const o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=mf(c[[0,1,2,1,0,1,2,1][k]]+12);g.gain.setValueAtTime(.03,nT);g.gain.exponentialRampToValueAtTime(.001,nT+.22);o.connect(g);g.connect(ac.destination);o.start(nT);o.stop(nT+.25);nT+=.25;mS++}}
+function setMus(on){mus=on;clearInterval(mT);if(on){ctx();if(ac.state==='suspended')ac.resume();nT=ac.currentTime+.1;mT=setInterval(sched,100)}}
+document.getElementById('snd').onclick=e=>{snd=!snd;e.target.textContent='Ton: '+(snd?'ja':'nein')};
+document.getElementById('mus').onclick=e=>{setMus(!mus);e.target.textContent='Musik: '+(mus?'ja':'nein')};
+// Fernbedienung: Pfeile, OK, Tasten 1-4
+addEventListener('keydown',e=>{const k=e.key;
+ if(/^[1-4]$/.test(k)&&pick<0&&Q[i]){answer(+k-1);return}
+ if((k==='n'||k==='N')&&pick>=0){next();return}
+ const bs=[...document.querySelectorAll('button:not(:disabled)')].filter(b=>!b.id.match(/snd|mus/));const idx=bs.indexOf(document.activeElement);
+ if(['ArrowRight','ArrowDown'].includes(k)){e.preventDefault();(bs[idx+1]||bs[0]).focus()}
+ else if(['ArrowLeft','ArrowUp'].includes(k)){e.preventDefault();(bs[idx-1]||bs[bs.length-1]).focus()}});
+prep();
+</script></body></html>
