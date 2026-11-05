@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deutsch-Spiele</title>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#0b0b2b;--line:#22d3ee}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 0,#2b2b7a,var(--bg) 70%);color:#fff;font-family:"Trebuchet MS",Verdana,Arial,sans-serif}
+main{max-width:1250px;margin:0 auto;padding:3vh 3vw 6vh;text-align:center}
+h1{font-size:clamp(28px,5vw,56px);margin:.2em 0}
+p{font-size:clamp(15px,2vw,24px);opacity:.85;margin:0 0 3vh}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:2vw}
+a{display:block;padding:3.5vh 1vw;border-radius:22px;border:4px solid var(--line);background:var(--c,#1e3a8a);color:#fff;text-decoration:none;font-size:clamp(17px,2.1vw,28px);font-weight:700;transition:transform .15s}
+a b{display:block;font-size:.7em;opacity:.8;letter-spacing:.1em}
+a small{display:block;font-weight:400;font-size:.58em;margin-top:.4em;opacity:.9}
+a:hover,a:focus{transform:scale(1.05);outline:5px solid #facc15;outline-offset:4px}
+</style></head><body><main>
+<h1>Deutsch-Spiele</h1>
+<p>Wähle ein Spiel · Choisis un jeu (flèches + OK)</p>
+<div class="g">
+<a href="monstres.html" style="--c:#3b1f8a" autofocus><b>1</b>Cosmic Monster Battle<small>Monster · Artikel · Verben</small></a>
+<a href="wissens-quest.html" style="--c:#b45309"><b>2</b>Wissens-Quest<small>Schule und Alltag</small></a>
+<a href="herbstwald-quiz.html" style="--c:#9a3412"><b>3</b>Herbstwald-Quiz<small>Tiere und Herbst</small></a>
+<a href="portal-quiz.html" style="--c:#9f1239"><b>4</b>Portal-Quiz<small>Stadt und Verkehr</small></a>
+<a href="affen-quiz.html" style="--c:#166534"><b>5</b>Affen-Quiz<small>Füttere den Affen</small></a>
+<a href="oscar-schule.html" style="--c:#92400e"><b>6</b>Schulsachen-Quiz<small>Oscar packt seine Tasche</small></a>
+<a href="blaster-quiz.html" style="--c:#6b21a8"><b>7</b>Duell-Quiz<small>Kleidung und Farben</small></a>
+<a href="seifenblasen-quiz.html" style="--c:#a21caf"><b>8</b>Seifenblasen-Quiz<small>Fest und Essen</small></a>
+<a href="kaetzchen-puzzle.html" style="--c:#b45309"><b>9</b>Kätzchen-Puzzle<small>Haustiere</small></a>
+<a href="ballon-quiz.html" style="--c:#be123c"><b>10</b>Ballon-Quiz<small>Jahrmarkt und Farben</small></a>
+<a href="schatz-quiz.html" style="--c:#1e3a5f"><b>11</b>Schatz-Quiz<small>Piraten und Meer</small></a>
+<a href="marktplatz-quiz.html" style="--c:#15803d"><b>12</b>Marktplatz-Quiz<small>Essen und Trinken</small></a>
+<a href="schule-lektionen.html" style="--c:#2f5d46"><b>13</b>Lektionen: Schule und Lehrer<small>Karten, Aussprache und Quiz</small></a>
+<a href="zahlen-schuetze.html" style="--c:#5b21b6"><b>14</b>Zahlen-Schütze<small>Rechnen und Zahlen · 1 bis 4 Spieler</small></a>
+<a href="vogel-labyrinth.html" style="--c:#0f766e"><b>15</b>Vogel-Labyrinth<small>Tiere und Farben · A B C D</small></a>
+<a href="grammatik-meister.html" style="--c:#4c1d95"><b>16</b>Der goldene Grammatik-Meister<small>Fahrrad-Abenteuer · Grammatik</small></a>
+<a href="familie-zuhause.html" style="--c:#9a3412"><b>17</b>Familie und Zuhause<small>Quiz · A1</small></a>
+<a href="deutsch-quiz.html" style="--c:#1d4ed8"><b>18</b>Deutsch-Quiz<small>Wortschatz und Grammatik · A1</small></a>
+<a href="mathe-quiz.html" style="--c:#7c3aed"><b>19</b>Mathe-Quiz<small>Rechnen · Klasse 5</small></a>
+<a href="allgemeinwissen-quiz.html" style="--c:#0f766e"><b>20</b>Allgemeinwissen<small>Welt, Tiere, Planeten</small></a>
+<a href="Plus%20%26%20Minus%20Math%20Race.html" style="--c:#0e7490"><b>21</b>Plus &amp; Minus Math Race<small>Mathematik · Addition und Subtraktion</small></a>
+</div></main>
+<script>addEventListener('keydown',e=>{const l=[...document.querySelectorAll('a')],i=l.indexOf(document.activeElement);if(['ArrowRight','ArrowDown'].includes(e.key)){e.preventDefault();(l[i+1]||l[0]).focus()}else if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();(l[i-1]||l[l.length-1]).focus()}});</script>
+</body></html>
